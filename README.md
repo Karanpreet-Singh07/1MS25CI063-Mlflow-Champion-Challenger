@@ -96,4 +96,22 @@ Model B reached a Macro-F1 score of **0.9399**, outperforming Model A's **0.9200
 
 **Model B (`siebert/sentiment-roberta-large-english`)** has been selected as the final Champion. This outcome rests primarily on Macro-F1, the metric agreed upon before running the benchmark. Model B recorded a Macro-F1 of **0.9399** against **0.9200** for Model A (`distilbert-base-uncased-finetuned-sst-2-english`), delivering an improvement of **0.0199**—comfortably above the mandatory **0.01** margin. Model B also led in overall accuracy, scoring **0.9400** versus **0.9200** for Model A.
 
-This gain in predictive performance comes with a steep latency cost. Model B averaged roughly **691.70 ms per sample**, compared with approximately **113.42 ms
+This gain in predictive performance comes with a steep latency cost. Model B averaged roughly **691.70 ms per sample**, compared with approximately **113.42 ms per sample** for Model A, making Model B around 6 times slower on the CPU setup used for testing. Even with this overhead, the Macro-F1 margin was wide enough to satisfy the pre-established Champion rule.
+
+Accordingly, Model B is promoted to **Champion** and Model A shifts to **Challenger**. Both models are logged in the MLflow Model Registry, with the `champion` alias assigned to Model B and the `challenger` alias assigned to Model A. Following registration, the Champion was retrieved from the registry to run inference on a separate batch of unseen data.
+
+---
+
+## 6. Limitations and Declaration
+
+### Limitations
+
+Because this benchmark relies on a modest sample of **100 SST-2 validation examples**, the observed scores may not fully generalise to all real-world sentiment inputs. Running the evaluation on a CPU also means latency figures are heavily influenced by the specific hardware used. While Model B delivers stronger classification metrics, it requires noticeably more compute time and has a larger footprint.
+
+Strict separation was maintained between benchmark data and inference inputs—none of the 5 records in `data/new_data.csv` were included in computing the evaluation metrics.
+
+### AI Assistant Declaration
+
+AI assistants supported the development process through coding guidance, troubleshooting, documentation drafting, and workflow advice. The student independently reviewed and verified the final codebase, MLflow experiment tracking, model evaluation, Champion–Challenger decision, registry configuration, and inference pipeline.
+
+This project relies on MLflow for experiment tracking and model lifecycle management, alongside Hugging Face Transformers for sentiment classification.
