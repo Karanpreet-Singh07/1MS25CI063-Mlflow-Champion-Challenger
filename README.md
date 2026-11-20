@@ -1,59 +1,59 @@
-# Champion–Challenger Model Comparison with Hugging Face and MLflow
+# Sentiment Analysis Champion–Challenger Benchmark with Hugging Face and MLflow
 
-## 1. Task and Models
+## 1. Overview: Task and Models
 
 **Task:** Sentiment Analysis  
-**Dataset:** Stanford Sentiment Treebank (SST-2) validation set  
-**Evaluation subset:** 100 examples — 50 Positive and 50 Negative  
+**Dataset:** Stanford Sentiment Treebank (SST-2) validation split  
+**Evaluation sample:** 100 instances — 50 Positive and 50 Negative  
 **Random seed:** 42
 
 ### Model A — Initial Champion
 - **Hugging Face ID:** `distilbert-base-uncased-finetuned-sst-2-english`
 - **Role:** Initial Champion
-- **Model type:** DistilBERT fine-tuned for SST-2 sentiment classification
+- **Architecture:** DistilBERT fine-tuned on SST-2 for sentiment classification
 
 ### Model B — Challenger
 - **Hugging Face ID:** `siebert/sentiment-roberta-large-english`
 - **Role:** Challenger
-- **Model type:** RoBERTa-large fine-tuned for English sentiment classification
+- **Architecture:** RoBERTa-large fine-tuned for English sentiment classification
 
-Both models were evaluated on the **same 100 inputs in the same order** to ensure a fair comparison.
+To guarantee a fair comparison, both models were tested on the **exact same 100 inputs in the identical sequence**.
 
 ---
 
-## 2. How to Run
+## 2. Running the Workflow
 
-Start the MLflow tracking server:
+First, launch the local MLflow tracking server:
 
 ```bash
 mlflow server --host 127.0.0.1 --port 5000
 ```
 
-Then, from the project directory, run the evaluation:
+Next, execute the evaluation script from the project root directory:
 
 ```bash
 python evaluate.py
 ```
 
-Register the evaluated models and assign Champion/Challenger aliases:
+Register both evaluated models in MLflow and set their Champion and Challenger aliases:
 
 ```bash
 python register_champion.py
 ```
 
-Run inference on new, unseen data using the MLflow Champion alias:
+Finally, generate predictions on unseen data by loading the model assigned to the Champion alias:
 
 ```bash
 python predict_from_mlflow.py
 ```
 
-The final prediction output is saved to:
+The resulting predictions are written to:
 
 ```text
 outputs/new_data_predictions.csv
 ```
 
-The Champion is loaded through the MLflow Model Registry using:
+The active Champion model is fetched from the MLflow Model Registry via:
 
 ```text
 models:/HF_Sentiment_Champion_Challenger@champion
@@ -61,21 +61,21 @@ models:/HF_Sentiment_Champion_Challenger@champion
 
 ---
 
-## 3. Champion Rule
+## 3. Champion Selection Rule
 
-The Champion rule was defined **before the final benchmark run**.
+The promotion criteria were established **prior to executing the final benchmark**.
 
 - **Primary metric:** Macro-F1
-- **Direction:** Higher is better
-- **Minimum improvement margin:** 0.01
+- **Optimisation goal:** Higher is better
+- **Minimum improvement threshold:** 0.01
 - **Tie-breaker:** Lower average inference latency
-- **Decision rule:** The Challenger becomes Champion only if its Macro-F1 improves over the current Champion by at least 0.01. Otherwise, the current Champion remains Champion. If the primary metric is tied within the decision margin, lower latency is used as the tie-breaker.
+- **Selection logic:** The Challenger replaces the current Champion only if it outperforms the Champion's Macro-F1 by at least 0.01; otherwise, the existing Champion holds its title. If the scores are tied within the decision margin, the model with lower latency wins.
 
-Model A was initially designated as the Champion, while Model B was evaluated as the Challenger.
+At the start of the experiment, Model A served as the Champion and Model B was tested as the Challenger.
 
 ---
 
-## 4. Results Table
+## 4. Benchmark Results
 
 | Metric | Model A — DistilBERT | Model B — RoBERTa | Difference (B − A) |
 |---|---:|---:|---:|
@@ -84,34 +84,16 @@ Model A was initially designated as the Champion, while Model B was evaluated as
 | Avg. Latency (ms/sample) | 113.42 | 691.70 | +578.28 |
 | Total Inference Time (s) | 11.3417 | 69.1695 | +57.8278 |
 
-### Final Decision
+### Outcome
 
-**Champion:** Model B — `siebert/sentiment-roberta-large-english`
+**Selected Champion:** Model B — `siebert/sentiment-roberta-large-english`
 
-Model B achieved a Macro-F1 score of **0.9399**, compared with **0.9200** for Model A. The improvement of **0.0199** is greater than the predefined minimum improvement margin of **0.01**, so the Challenger satisfies the Champion rule and replaces Model A.
-
----
-
-## 5. Decision
-
-The final Champion is **Model B (`siebert/sentiment-roberta-large-english`)**. The decision was based primarily on Macro-F1, which was selected before running the final benchmark. Model B achieved a Macro-F1 of **0.9399**, while Model A (`distilbert-base-uncased-finetuned-sst-2-english`) achieved **0.9200**. This gives Model B an improvement of **0.0199**, exceeding the required improvement margin of **0.01**. Model B also achieved higher accuracy, with **0.9400** compared with **0.9200** for Model A.
-
-However, the accuracy improvement comes with a significant latency trade-off. Model B required approximately **691.70 ms per sample**, whereas Model A required approximately **113.42 ms per sample**. Therefore, Model B is about 6 times slower on the CPU environment used for evaluation. Despite this performance cost, the improvement in Macro-F1 was large enough to satisfy the predefined Champion rule.
-
-Based on the selected evaluation criteria, Model B is therefore promoted to **Champion**, while Model A becomes the **Challenger**. Both models were registered in MLflow, with the `champion` alias pointing to Model B and the `challenger` alias pointing to Model A. The Champion was subsequently loaded through the MLflow Model Registry and used to generate predictions on separate, previously unseen data.
+Model B reached a Macro-F1 score of **0.9399**, outperforming Model A's **0.9200**. Because this **0.0199** gain exceeds the required **0.01** minimum improvement threshold, the Challenger meets the selection rule and takes over from Model A.
 
 ---
 
-## 6. Limitations and Declaration
+## 5. Decision Rationale
 
-### Limitations
+**Model B (`siebert/sentiment-roberta-large-english`)** has been selected as the final Champion. This outcome rests primarily on Macro-F1, the metric agreed upon before running the benchmark. Model B recorded a Macro-F1 of **0.9399** against **0.9200** for Model A (`distilbert-base-uncased-finetuned-sst-2-english`), delivering an improvement of **0.0199**—comfortably above the mandatory **0.01** margin. Model B also led in overall accuracy, scoring **0.9400** versus **0.9200** for Model A.
 
-The final comparison used a relatively small evaluation subset of **100 SST-2 validation examples**, so the measured performance may not represent performance on all possible sentiment inputs. The evaluation was performed in a CPU environment, making latency particularly sensitive to the hardware available. Model B provides better classification performance but has substantially higher inference latency and model size.
-
-The evaluation data and new prediction data were kept separate. The 5 examples in `data/new_data.csv` were not used for calculating the benchmark metrics.
-
-### AI Assistant Declaration
-
-AI assistants were used during development for code guidance, debugging, documentation support, and project workflow assistance. The final implementation, MLflow tracking, model comparison, Champion–Challenger decision, registry configuration, and inference workflow were reviewed and verified by the student.
-
-The project uses MLflow for experiment tracking and model management, and Hugging Face Transformers models for sentiment classification.
+This gain in predictive performance comes with a steep latency cost. Model B averaged roughly **691.70 ms per sample**, compared with approximately **113.42 ms
